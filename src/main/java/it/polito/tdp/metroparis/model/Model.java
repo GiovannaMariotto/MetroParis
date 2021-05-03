@@ -1,11 +1,18 @@
 package it.polito.tdp.metroparis.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.jgrapht.Graph;
 import org.jgrapht.Graphs;
+import org.jgrapht.event.ConnectedComponentTraversalEvent;
+import org.jgrapht.event.EdgeTraversalEvent;
+import org.jgrapht.event.TraversalListener;
+import org.jgrapht.event.VertexTraversalEvent;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 import org.jgrapht.traverse.BreadthFirstIterator;
@@ -18,7 +25,8 @@ public class Model {
 	//Vertici: obj. Fermata
 	
 	Graph <Fermata,DefaultEdge> grafo;
-	//IdentityMap<String,Fermata>
+	
+	Map<Fermata,Fermata> predecessore ;
 	
 	public void creaGrafo() {
 		this.grafo = new SimpleGraph<Fermata,DefaultEdge>(DefaultEdge.class);
@@ -78,13 +86,60 @@ public class Model {
 	}
 	
 	public	List<Fermata> fermateRaggiungibili(Fermata partenza) {
-		//BreadthFirstIterator<Fermata,DefaultEdge> bfv = new BreadthFirstIterator(this.grafo,partenza);
+		BreadthFirstIterator<Fermata,DefaultEdge> bfv = new BreadthFirstIterator(this.grafo,partenza);
 		List<Fermata> result = new ArrayList();
 		
-		DepthFirstIterator dfv = new DepthFirstIterator(this.grafo,partenza);
+		predecessore = new HashMap<>();
+		predecessore.put(partenza, null);
 		
-		while(dfv.hasNext()) {
-			Fermata f = (Fermata) dfv.next();
+		bfv.addTraversalListener(new TraversalListener<Fermata,DefaultEdge>(){
+
+			@Override
+			public void connectedComponentFinished(ConnectedComponentTraversalEvent e) {
+				
+				
+			}
+
+			@Override
+			public void connectedComponentStarted(ConnectedComponentTraversalEvent e) {
+			
+				
+			}
+
+			@Override
+			public void edgeTraversed(EdgeTraversalEvent<DefaultEdge> e) {
+				DefaultEdge arco = e.getEdge();
+				Fermata a = grafo.getEdgeSource(arco);
+				Fermata b =grafo.getEdgeTarget(arco);
+				//ho scoperto 'a' arrivando da 'b' ( se 'b' lo conoscevo già)
+				if(predecessore.containsKey(b) && !predecessore.containsKey(a)) {
+					predecessore.put(a, b);
+					//System.out.println(a+" è scoperto da "+b);
+			}else if(predecessore.containsKey(a) && !predecessore.containsKey(b)) {
+				//di sicuro conosceva 'a' e ho scoperto 'b'
+				predecessore.put(b, a);
+				//System.out.println(b+" è scoperto da "+a);
+			}
+				}
+
+			@Override
+			public void vertexTraversed(VertexTraversalEvent<Fermata> e) {
+		//			Fermata nuova = e.getVertex();
+		//			Fermata precedente; //vertice adiacente a 'nuova' che è gia aggiunta
+		//			predecessore.put(nuova, precedente);
+			}
+
+			@Override
+			public void vertexFinished(VertexTraversalEvent<Fermata> e) {
+				// TODO Auto-generated method stub
+				
+			}
+	
+		});
+		//DepthFirstIterator dfv = new DepthFirstIterator(this.grafo,partenza);
+		
+		while(bfv.hasNext()) {
+			Fermata f = (Fermata) bfv.next();
 			result.add(f);
 		}
 		
@@ -100,7 +155,18 @@ public class Model {
 		return null;
 	}
 	
-	
+	public List<Fermata> trovaCaminno(Fermata partenza, Fermata arrivo) {
+		fermateRaggiungibili(partenza); //creata la mapa dei predecessori
+		List<Fermata> result = new LinkedList();
+		result.add(arrivo);
+		Fermata f = arrivo;
+		while(predecessore.get(f)!=null) {
+			f=predecessore.get(f);
+			result.add(0,f);
+			
+		}
+		return result; //arrivo ---> partenza (albero camini minimi)
+	}
 	
 }
   
