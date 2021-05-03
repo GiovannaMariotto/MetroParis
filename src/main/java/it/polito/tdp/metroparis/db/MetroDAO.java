@@ -97,20 +97,22 @@ public class MetroDAO {
 
 	public List<Connessione> getAllConnessioni(List<Fermata> fermate){
 		String sql="SELECT id_connessione,id_linea,id_stazP,id_stazA "
-				+ "FROM connessione c "
+				+ "FROM connessione  "
 				+ "WHERE id_stazP>id_stazA";
 		
 		try {
 			Connection con = DBConnect.getConnection();
 			PreparedStatement st = con.prepareStatement(sql);
 			ResultSet rs = st.executeQuery();
-			List<Connessione> result = null;
+			List<Connessione> result = new ArrayList<Connessione>();
+			
 			while(rs.next()) {
 				int id_partenza = rs.getInt("id_stazP");
 				int id_arrivo =  rs.getInt("id_stazA");
 				
-				Fermata fermata_partenza;
-				Fermata fermata_Arrivo;
+				Fermata fermata_partenza = null;
+				Fermata fermata_Arrivo = null;
+				
 				for(Fermata f : fermate) {
 					if(f.getIdFermata()==id_partenza) {
 						fermata_partenza =f;
@@ -123,12 +125,14 @@ public class MetroDAO {
 				}
 				
 				
-				Connessione c = new Connessione(rs.getInt("id_connessione"),null,null,null );
+				Connessione c = new Connessione(rs.getInt("id_connessione"),null,fermata_partenza,fermata_Arrivo );
+				result.add(c);
 				//Adesso ignoro la linea ( non mi serve adesso )
 				//Devo creare la fermata
 			
 			}
-			
+			st.close();
+			rs.close();
 			con.close();
 			return result;
 		}catch(SQLException sqle) {

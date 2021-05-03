@@ -1,11 +1,15 @@
 package it.polito.tdp.metroparis.model;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.jgrapht.Graph;
 import org.jgrapht.Graphs;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
+import org.jgrapht.traverse.BreadthFirstIterator;
+import org.jgrapht.traverse.DepthFirstIterator;
 
 import it.polito.tdp.metroparis.db.MetroDAO;
 
@@ -14,6 +18,7 @@ public class Model {
 	//Vertici: obj. Fermata
 	
 	Graph <Fermata,DefaultEdge> grafo;
+	//IdentityMap<String,Fermata>
 	
 	public void creaGrafo() {
 		this.grafo = new SimpleGraph<Fermata,DefaultEdge>(DefaultEdge.class);
@@ -27,7 +32,7 @@ public class Model {
 		
 	Graphs.addAllVertices(this.grafo, fermate);	
 	
-	System.out.println(this.grafo);
+	//System.out.println(this.grafo);
 	
 	//Aggiungiamo gli archi
 	//Stiamo aggiungendo troppe connessioni
@@ -42,11 +47,60 @@ public class Model {
 //	}
 	
 	List<Connessione> connessioni = dao.getAllConnessioni(fermate);
-	for(Connessione c : connessioni) {
-		this.grafo.addEdge(c.getStazP(), c.getStazA());
+	if(!connessioni.isEmpty()) {
+		for(Connessione c : connessioni) {
+			if(c!=null)
+				this.grafo.addEdge(c.getStazP(), c.getStazA());
+		}
 	}
+		System.out.format("Grafo creato con %d vertici e %d archi\n",
+			this.grafo.vertexSet().size(), this.grafo.edgeSet().size()) ;
 		
+		//System.out.println(this.grafo);
+	/*Fermata f = null;
+	Set<DefaultEdge>archi=this.grafo.edgesOf(f); //archi adiacenti
+	for(DefaultEdge e : archi) {
+		
+		Fermata f1 = this.grafo.getEdgeSource(e);//Sorgente
+		//oppure
+		Fermata f2 = this.grafo.getEdgeTarget(e);//Alvo
+		if(f1.equals(f)) {
+			//f2 è quello che mi serve
+		}else {
+			//f1 è quello che mi serve
+		}
+		Fermata f1=Graphs.getOppositeVertex(this.grafo,e, f);
+	}*/
 	
+	//List<Fermata> fermateAdj = Graphs.successorListOf(this.grafo,f);
+	//Dato una fermata, prende le fermate adiacenti
+	//Graphs.predecessorListOf(this.grafo, f);
 	}
+	
+	public	List<Fermata> fermateRaggiungibili(Fermata partenza) {
+		//BreadthFirstIterator<Fermata,DefaultEdge> bfv = new BreadthFirstIterator(this.grafo,partenza);
+		List<Fermata> result = new ArrayList();
+		
+		DepthFirstIterator dfv = new DepthFirstIterator(this.grafo,partenza);
+		
+		while(dfv.hasNext()) {
+			Fermata f = (Fermata) dfv.next();
+			result.add(f);
+		}
+		
+		return result;
+	}
+	
+	public Fermata trovaFermata(String nome ) {
+		for(Fermata f : this.grafo.vertexSet()) {
+			if(f.getNome().equals(nome)) {
+				return f;
+			}
+		}
+		return null;
+	}
+	
+	
 	
 }
+  
